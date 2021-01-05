@@ -18,6 +18,7 @@ public class BillController {
     @Autowired
     private BillService billService;
 
+    @RequestMapping("test")
     public void test(){
         System.out.printf("12345");
     }
