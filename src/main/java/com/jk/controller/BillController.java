@@ -19,7 +19,7 @@ public class BillController {
     private BillService billService;
 
     public void test(){
-        System.out.printf("123");
+        System.out.printf("12345");
     }
 
     @RequestMapping("findTree")
