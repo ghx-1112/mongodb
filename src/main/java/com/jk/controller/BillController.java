@@ -18,6 +18,10 @@ public class BillController {
     @Autowired
     private BillService billService;
 
+    public void test(){
+        System.out.printf("123");
+    }
+
     @RequestMapping("findTree")
     @ResponseBody
     public List<TreeBean> findTree(){
