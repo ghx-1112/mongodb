@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <!-- 引入jquery.js文件 -->
+    <script type="text/javascript" src="../js/jquery-easyui-1.5/jquery.min.js"></script>
+    <!-- 引入easyui的js文件 -->
+    <script type="text/javascript" src="../js/jquery-easyui-1.5/jquery.easyui.min.js"></script>
+    <!-- 引入easyui的中文js文件 -->
+    <script type="text/javascript" src="../js/jquery-easyui-1.5/locale/easyui-lang-zh_CN.js"></script>
+
+    <!-- 引入easyui的css文件 -->
+    <link rel="stylesheet" href="../js/jquery-easyui-1.5/themes/default/easyui.css">
+    <!-- 引入easyui图标的css文件 -->
+    <link rel="stylesheet" href="../js/jquery-easyui-1.5/themes/icon.css">
+</head>
+<body>
+    <div id="adddialog" class="easyui-dialog" data-options="width:400,height:300,buttons:'#mybtn',closed:true,modal:true">
+        <form id="myfrom" method="post">
+            <input style="display:none"  name="id">
+            <table>
+                <tr>
+                    <td>账单名称</td>
+                    <td>
+                        <input class="easyui-textbox" name="name">
+                    </td>
+                </tr>
+                <tr>
+                    <td>消费金额</td>
+                    <td>
+                        <input class="easyui-textbox" name="price">
+                    </td>
+                </tr>
+                <tr>
+                    <td>账单内容</td>
+                    <td>
+                        <input class="easyui-textbox" name="info">
+                    </td>
+                </tr>
+                <tr>
+                    <td>消费时间</td>
+                    <td>
+                        <input class="easyui-datebox" name="bdate">
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </div>
+    <div id="mybtn">
+        <a class="easyui-linkbutton" data-options="iconCls:'icon-ok'" onclick="javascript:addBill()">确定</a>
+        <a class="easyui-linkbutton" data-options="iconCls:'icon-cancel'" onclick="javascript:closeAdd()">取消</a>
+    </div>
+    <div id="mydiv">
+        账单名称：<input class="easyui-textbox" id="names">
+        消费时间：<input class="easyui-datebox" id="sdate">-<input class="easyui-datebox" id="edate">
+        <a class="easyui-linkbutton" data-options="iconCls:'icon-search'" onclick="javascript:searchBill()">搜索</a>
+        <a class="easyui-linkbutton" data-options="iconCls:'icon-remove'" onclick="javascript:deleteAll()">批删</a>
+        <a class="easyui-linkbutton" data-options="iconCls:'icon-add'" onclick="javascript:toAdd()">新增</a>
+    </div>
+    <table id="mytable"></table>
+</body>
+<script>
+    $(function(){
+        initTable();
+    })
+    function toupdate(id){
+        //第一种方式回显
+        $.ajax({
+            url:"../bill/findBillById",
+            type:"get",
+            data:{id:id},
+            success:function(data){
+                $("#myfrom").form("load",data);
+                $("#adddialog").dialog({
+                    closed:false, //打开
+                    title:'修改账单'
+                });
+            }
+        });
+    }
+    function deleteAll(){
+        var arr = $("#mytable").datagrid("getChecked");
+        var ids = "";
+        for(var i=0;i<arr.length;i++){
+            ids+= (ids=="" ? arr[i].id : (","+arr[i].id));
+        }
+        if(ids==""){
+            $.messager.alert("提示","请至少选中一条数据！","info");
+            return;
+        }
+        $.messager.confirm("提示","是否确认删除？",function(r){
+            if(r){//删除
+                $.ajax({
+                    url:"../bill/del",
+                    type:"post",
+                    data:{ids:ids},
+                    success:function(){
+                        $.messager.alert("我的消息","删除成功！！！","info");
+                        searchBill();
+                    }
+                });
+            }
+        });
+    }
+
+    function del(id){
+        $.messager.confirm("提示","是否确认删除？",function(r){
+            if(r){//删除
+                $.ajax({
+                    url:"../bill/del",
+                    type:"post",
+                    data:{ids:id},
+                    success:function(){
+                        $.messager.alert("我的消息","删除成功！！！","info");
+                        searchBill();
+                    }
+                });
+            }
+        });
+
+    }
+    function searchBill(){
+        $("#mytable").datagrid("load",{
+            name:$("#names").textbox("getValue"),
+            sdate:$("#sdate").datebox("getValue"),
+            edate:$("#edate").combobox("getValue")
+        });
+    }
+    function addBill(){
+        //提交表单
+        $("#myfrom").form("submit",{
+            url:"../bill/addBill",
+            success:function(){
+                $.messager.alert("提示","操作成功！","info");
+                //关闭弹框
+                closeAdd();
+                searchBill();
+            }
+        });
+    }
+    function closeAdd(){
+        $("#adddialog").dialog({
+            closed:true //关闭
+        });
+    }
+    function toAdd(){
+        $("#myfrom").form("reset");//clear 清空  reset 重置
+        $("#adddialog").dialog({
+            closed:false, //打开
+            title:'新增账单'
+        });
+    }
+    function initTable(){
+        $("#mytable").datagrid({
+            url:"../bill/findBill",
+            columns:[
+                [
+                {field:"check",checkbox:true},//开启复选框
+                {field:"id",title:"id"},
+                {field:"name",title:"账单名称",width:100},
+                {field:"price",title:"消费金额",width:100},
+                {field:"info",title:"账单内容",width:100},
+                {field:"bdate",title:"消费时间",width:100},
+                {field:"tools",title:"操作",width:100,formatter:function(value,row,index){
+                        return "<a href='javascript:del(\""+row.id+"\")'>删除</a> | <a href='javascript:toupdate(\""+row.id+"\")'>修改</a>";
+                    }}
+                ]
+            ],
+            pagination:true,//开启分页
+            pageSize:2,//每页条数
+            pageList:[2,3,4,5],//下拉列表设置分页
+            pageNumber:1, //初始化页码
+            toolbar:"#mydiv",//工具栏
+            striped:true, //是否显示斑马线效果。
+            loadMsg:"等会吧...",//在从远程站点加载数据的时候显示提示消息。
+            rownumbers:true, //如果为true，则显示一个行号列。
+            pagePosition:"bottom"
+        });
+    }
+</script>
+</html>
